@@ -14,6 +14,7 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 #region Builder
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,7 @@ string GerarTokenJwt(Administrador administrador)
     var claims = new List<Claim>()
     {
         new Claim("Email", administrador.Email),
+        new Claim(ClaimTypes.Role, administrador.Perfil),
         new Claim("Perfil", administrador.Perfil)
     };
 
@@ -147,7 +149,10 @@ app.MapPost("/administradores", ([FromBody] AdministradorDto administradorDto, I
             Email = adm.Email, 
             Perfil = adm.Perfil
         });
-}).RequireAuthorization().WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm"})
+.WithTags("Administradores");
 
 app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico administradorServico) => {
     var adms = new List<AdministradorModelView>();
@@ -161,7 +166,10 @@ app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico a
         });
     }
     return Results.Ok(adms);
-}).RequireAuthorization().WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm"})
+.WithTags("Administradores");
 
 app.MapGet("/administradores/{id}", ([FromRoute] int id, IAdministradorServico administradorServico) => {
     var adm = administradorServico.BuscaPorId(id);
@@ -171,7 +179,10 @@ app.MapGet("/administradores/{id}", ([FromRoute] int id, IAdministradorServico a
             Email = adm.Email, 
             Perfil = adm.Perfil
         });
-}).RequireAuthorization().WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm"})
+.WithTags("Administradores");
 
 #endregion
 
@@ -208,7 +219,10 @@ app.MapPost("/veiculos", ([FromBody] VeiculoDto veiculoDto, IVeiculosServico vei
     veiculoServico.Incluir(veiculo);
 
     return Results.Created($"/veiculo/{veiculo.Id}", veiculo);
-}).RequireAuthorization().WithTags("Veiculos");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm,Editor"})
+.WithTags("Veiculos");
 
 
 app.MapGet("/veiculos", (IVeiculosServico veiculoServico) => {
